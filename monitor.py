@@ -11,7 +11,7 @@ class Monitor:
     A monitor class to create a lowest price monitor for ticombo listings
     """
 
-    def __init__(self, proxy_path=None, listings=[], delay=5555):
+    def __init__(self, proxy_path=None, listings=[], delay=60000):
         self.proxy_manager = ProxyManager(proxy_path)
         self.settings_manager = SettingsManager()
         self.listings = self.settings_manager.get_listings()
@@ -43,7 +43,7 @@ class Monitor:
     def monitor(self):
         # TODO check if proxies exist
         while self.running:
-            for i, proxy in enumerate(self.proxies):
+            for i, proxy in enumerate(self.proxy_manager.get_proxies()):
                 for j, listing in enumerate(self.listings):
                     print("making request")
                     r = requests.get(
@@ -61,7 +61,7 @@ class Monitor:
                                 floor < listing[4] 
                             ):
                                 listing[4] = floor
-                                print("New price!!")
+                                print(f"New price!! {floor=}")
                                 #self.send_webhook(listing[3], floor)
                             else:
                                 print("no change")
