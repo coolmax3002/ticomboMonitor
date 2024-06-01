@@ -5,6 +5,7 @@ import time
 from proxy_manager import ProxyManager
 from settings_manager import SettingsManager
 from webhook_manager import WebhookManager
+from urllib.parse import urlparse, parse_qs
 
 
 class Monitor:
@@ -39,6 +40,27 @@ class Monitor:
     def add_listing(self, listing_id, catergory, quantity, nickname):
         self.listings.append([listing_id, catergory, quantity, nickname, float("inf")])
         self.settings_manager.set_listings(self.listings)
+
+    def grab_listing_id(self, url):
+        #grab listing name from url
+        parsed_url = urlpase(url)
+        url_parts = parsed_url.path.split('/')
+        listing_name = url_parts[-1]
+
+        api_url = f"https://www.ticombo.com/prod/discovery/events?id={listing_name}&limit=1"
+
+        r = requests.get(api_url)
+        if r.status_code == 200:
+                data = r.json()
+                try:
+                    listing_id = data['payload'][0]['eventId']
+                except Exception as e:
+                    print("listing ID coud not be found")
+                    return None
+                return listing_id
+        else:
+                print(f"events api request failed {r.status_code=}")
+                return None
 
     def monitor(self):
         # TODO check if proxies exist

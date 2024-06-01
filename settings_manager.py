@@ -28,3 +28,9 @@ class SettingsManager():
         self.settings['listings'] = listings
         self.save_settings()
 
+    def valid_settings(self):
+        if self.settings['webhook'] == "":
+            return False
+        if len(self.settings['listings']) == 0:
+            return False
+        return True
