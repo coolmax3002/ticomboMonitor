@@ -2,9 +2,10 @@ import requests
 import json
 import threading
 import time
-from proxy_manager import ProxyManager 
-from settings_manager import SettingsManager 
-from webhook_manager import WebhookManager 
+from proxy_manager import ProxyManager
+from settings_manager import SettingsManager
+from webhook_manager import WebhookManager
+
 
 class Monitor:
     """
@@ -19,10 +20,9 @@ class Monitor:
         self.running = False
         self.thread = None
         self.delay = delay
-        
+
     def set_delay(self, delay):
         self.delay = delay
-
 
     def start_monitor(self):
         self.running = True
@@ -57,16 +57,20 @@ class Monitor:
                             print("trying to grab price")
                             floor = tickets[0]["price"]["selling"]["value"]
                             currency = tickets[0]["price"]["selling"]["currency"]
-                            if (
-                                floor < listing[4] 
-                            ):
+                            if floor < listing[4]:
                                 listing[4] = floor
+<<<<<<< Updated upstream
                                 print(f"New price!! {floor=}")
                                 #self.send_webhook(listing[3], floor)
+=======
+                                self.settings_manager.set_listings(self.listings)
+                                print(f"New price!! {floor=}")
+                                # self.webhook_manager.send_webhook(listing[3], floor)
+>>>>>>> Stashed changes
                             else:
                                 print("no change")
                         except Exception as e:
                             print("couldn't grab floor price")
                     else:
                         print(r.status_code)
-                    time.sleep(self.delay/1000)
+                    time.sleep(self.delay / 1000)
