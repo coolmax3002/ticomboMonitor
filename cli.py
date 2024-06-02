@@ -41,3 +41,6 @@ class MonitorCLI(Cmd):
             self.monitor.add_listing(listing_id, args[1], arg[2], args[3])
         else:
             print("No link provided")
+            
+    def do_show_listings(self, args):
+        print(self.monitor.listings)
