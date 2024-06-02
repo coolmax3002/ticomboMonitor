@@ -80,14 +80,14 @@ class Monitor:
                             floor = tickets[0]["price"]["selling"]["value"]
                             currency = tickets[0]["price"]["selling"]["currency"]
                             if floor < listing[4]:
-                                listing[4] = floor
 <<<<<<< Updated upstream
                                 print(f"New price!! {floor=}")
                                 #self.send_webhook(listing[3], floor)
 =======
                                 self.settings_manager.set_listings(self.listings)
                                 print(f"New price!! {floor=}")
-                                # self.webhook_manager.send_webhook(listing[3], floor)
+                                self.webhook_manager.send_webhook(listing[3], floor, listing[4])
+                                listing[4] = floor
 >>>>>>> Stashed changes
                             else:
                                 print("no change")
