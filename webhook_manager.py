@@ -11,7 +11,8 @@ class WebhookManager():
     def set_webhook_url(self, webhook_url):
         self.webhook_url = webhook_url
         
-    def send_webhook(self, nickname, new_price, old_price):
+    def send_webhook(self, nickname, new_price, old_price, url):
+        # TODO pass in the listing itself, and then parse within this function
         if self.webhook == "":
             print("Set webhook!")
             return
@@ -23,7 +24,7 @@ class WebhookManager():
             {
               "title": f"{nickname}",
               "description": f"The new lowest price for event is: {floor}\nThis is a {percent_change} {change}",
-              "url": "https://www.google.com",
+              "url": f"{url}",
               "color": 11478235
             }
           ],

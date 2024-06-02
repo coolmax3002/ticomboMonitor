@@ -18,6 +18,7 @@ class Monitor:
         self.settings_manager = SettingsManager()
         self.listings = self.settings_manager.get_listings()
         self.webhook_manager = WebhookManager()
+        self.urlMap = dict() 
         self.running = False
         self.thread = None
         self.delay = delay
@@ -54,6 +55,7 @@ class Monitor:
                 data = r.json()
                 try:
                     listing_id = data['payload'][0]['eventId']
+                    self.urlMap[listing_id] = url
                 except Exception as e:
                     print("listing ID coud not be found")
                     return None
@@ -81,7 +83,7 @@ class Monitor:
                             currency = tickets[0]["price"]["selling"]["currency"]
                             if floor < listing[4]:
                                 print(f"New price!! {floor=}")
-                                self.webhook_manager.send_webhook(listing[3], floor, listing[4])
+                                self.webhook_manager.send_webhook(listing[3], floor, listing[4], self.urlMap[listing[0]])
                                 listing[4] = floor
                                 self.settings_manager.set_listings(self.listings)
                             else:
