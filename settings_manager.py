@@ -1,4 +1,5 @@
 import json
+from listings import Listings
 
 class SettingsManager():
     """
@@ -25,7 +26,8 @@ class SettingsManager():
         return self.settings.get('listings', [])
 
     def set_listings(self, listings):
-        self.settings['listings'] = listings
+        for listings in listings:
+           self.settings['listings'].append(listing.to_dict())
         self.save_settings()
 
     def valid_settings(self):

@@ -6,7 +6,7 @@ from proxy_manager import ProxyManager
 from settings_manager import SettingsManager
 from webhook_manager import WebhookManager
 from urllib.parse import urlparse, parse_qs
-
+from listings import Listings
 
 class Monitor:
     """
@@ -27,6 +27,9 @@ class Monitor:
         self.delay = delay
 
     def start_monitor(self):
+        if len(self.listings) == 0:
+            print('There are no listings, please add at least one listing')
+            return
         self.running = True
         self.thread = threading.Thread(target=self.monitor, args=())
         self.thread.start()
@@ -39,7 +42,8 @@ class Monitor:
         return self.running
 
     def add_listing(self, listing_id, catergory, quantity, nickname):
-        self.listings.append([listing_id, catergory, quantity, nickname, float("inf")])
+        #TODO figure out good way to save json
+        self.listings.append(Listings(listing_id=listing_id, catergory=catergory, quantity=quantity, nickname=nickname))
         self.settings_manager.set_listings(self.listings)
 
     def grab_listing_id(self, url):
