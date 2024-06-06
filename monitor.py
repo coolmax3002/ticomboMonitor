@@ -16,20 +16,22 @@ class Monitor:
     def __init__(self, proxy_path=None, listings=[], delay=60000):
         self.proxy_manager = ProxyManager(proxy_path)
         self.settings_manager = SettingsManager()
-        self.listings = self.settings_manager.get_listings()
-        self.webhook_manager = WebhookManager()
+        self.webhook_manager = WebhookManager(webhook_url=self.settings_manager.get_setting('webhook'))
+        self.listings = []
         self.urlMap = dict() 
         self.running = False
         self.thread = None
         self.delay = delay
 
+        listings = self.settings_manager.get_listings()
+        print(listings)
+        for listing in listings:
+            self.listings.append(Listings(listing_id=listing['listing_id'], catergory=listing['catergory'], quantity=listing['quantity'], nickname=listing['nickname']))
+
     def set_delay(self, delay):
         self.delay = delay
 
     def start_monitor(self):
-        if len(self.listings) == 0:
-            print('There are no listings, please add at least one listing')
-            return
         self.running = True
         self.thread = threading.Thread(target=self.monitor, args=())
         self.thread.start()

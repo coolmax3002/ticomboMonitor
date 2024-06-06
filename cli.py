@@ -10,10 +10,14 @@ class MonitorCLI(Cmd):
         if self.monitor.get_monitor_status():
             print("Monitor already running")
             return
-        if self.monitor.settings_manager.valid_settings():
+        invalid_settings = self.monitor.settings_manager.valid_settings()
+        if not invalid_settings:
            self.monitor.start_monitor()
         else:
-            print("Monitor settings are not set")
+            if invalid_settings == 1:
+               print("no listings are set") 
+            else:
+                print("webhook is not set")
     
     def do_stop_monitor(self, arg):
         if self.monitor.get_monitor_status():
@@ -38,6 +42,29 @@ class MonitorCLI(Cmd):
             self.monitor.add_listing(listing_id, args[1], arg[2], args[3])
         else:
             print("No link provided")
+
+    def do_set_webhook(self, arg):
+        if not arg:
+            print("please include your webhook in the command: set_webhook <webhook_url>")
+            return
+        args = shlex.split(arg)
+        self.monitor.webhook_manager.set_webhook_url(args[0])
+        self.monitor.settings_manager.set_setting('webhook', args[0])
+        print("Webhook successfuly saved. Test the webhook with the command: test_webhook")
+        return
+
+    def do_test_webhook(self, arg):
+        if self.monitor.webhook_manager.get_webhook_url() == "":
+            print("webhook not set!")
+            return
+        self.monitor.webhook_manager.test_webhook()
+        return
+
+    def do_show_webhook(self, arg):
+        if self.monitor.webhook_manager.get_webhook_url() == "":
+            print("webhook not set!")
+            return
+        print(self.monitor.webhook_manager.get_webhook_url())
             
     def do_show_listings(self, args):
         print(self.monitor.listings)

@@ -22,6 +22,11 @@ class SettingsManager():
         self.settings[key] = value
         self.save_settings()
 
+    def get_setting(self, key):
+        if key in self.settings:
+            return self.settings[key]
+        return None
+
     def get_listings(self):
         return self.settings.get('listings', [])
 
@@ -32,7 +37,7 @@ class SettingsManager():
 
     def valid_settings(self):
         if self.settings['webhook'] == "":
-            return False
+            return 2 
         if len(self.settings['listings']) == 0:
-            return False
-        return True
+            return 1 
+        return 0 
