@@ -3,18 +3,15 @@ from monitor import Monitor
 import shlex
 
 class MonitorCLI(Cmd):
+    monitor = Monitor(proxy_path='proxies.txt')
     prompt = 'ticomboMonitor> '
-
-    def __init__(self):
-        super.__init__()
-        self.monitor = Monitor(proxy_path='proxies.txt')
 
     def do_start_monitor(self, arg):
         if self.monitor.get_monitor_status():
             print("Monitor already running")
             return
-        if self.monitor.settings_manager.validSettings():
-            self.monitor.start_monitor()
+        if self.monitor.settings_manager.valid_settings():
+           self.monitor.start_monitor()
         else:
             print("Monitor settings are not set")
     
