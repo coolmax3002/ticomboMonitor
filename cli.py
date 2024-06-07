@@ -44,6 +44,7 @@ class MonitorCLI(Cmd):
             while not quantity.isdigit() and 1 <= quantity <= 4:
                 quantity = input("provide a valid quantity between 1 and 4: ")
             nickname = input("Provide a nickname for this event: ") 
+            self.monitor.add_listing(listing_id, category, quantity, nickname)
         else:
             print("No link provided")
 

@@ -18,7 +18,7 @@ class Monitor:
         self.settings_manager = SettingsManager()
         self.webhook_manager = WebhookManager(webhook_url=self.settings_manager.get_setting('webhook'))
         self.listings = []
-        self.url_map = dict() 
+        self.url_map = self.settings_manager.get_url_map() 
         self.running = False
         self.thread = None
         self.delay = delay
@@ -45,8 +45,11 @@ class Monitor:
 
     def add_listing(self, listing_id, category, quantity, nickname):
         #TODO pull all the categories and choose the closest one to the one provided 
-        self.listings.append(Listings(listing_id=listing_id, category=category, quantity=quantity, nickname=nickname))
+        new_listing = Listings(listing_id=listing_id, category=category, quantity=quantity, nickname=nickname)
+        self.listings.append(new_listing)
         self.settings_manager.set_listings(self.listings)
+        #TODO add url to the listing class instead of passing url too
+        self.webhook_manager.send_new_listing_webhook(new_listing, self.url_map[new_listing.listing_id])
 
     def grab_listing_id(self, url):
         #grab listing name from url
@@ -92,6 +95,7 @@ class Monitor:
                             if floor < listing.floor:
                                 print(f"New price!! {floor=}")
                                 self.webhook_manager.send_webhook(listing.nickname, floor, listing.floor, self.url_map[listing.listing_id])
+                                print('webhook sent')
                                 listing.floor = floor
                                 self.settings_manager.set_listings(self.listings)
                             else:

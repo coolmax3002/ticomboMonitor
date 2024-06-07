@@ -1,5 +1,6 @@
 import requests
 import json
+from listings import Listings
 
 class WebhookManager():
     """
@@ -35,14 +36,19 @@ class WebhookManager():
         
     def send_webhook(self, nickname, new_price, old_price, url):
         # TODO pass in the listing itself, and then parse within this function
-        percent_change = round(abs(old_price - new_price) / old_price * 100, 1)
-        change = "increase" if new_price >= old_price else "decrease"
+        if old_price == float('inf'):
+            percent_change = 'initial'
+            change = 'webhook'
+        else:
+            percent_change = round(abs(old_price - new_price) / old_price * 100, 1)
+            change = "increase" if new_price >= old_price else "decrease"
+        print('here')
         message = {
           "content": None,
           "embeds": [
             {
               "title": f"{nickname}",
-              "description": f"The new lowest price for event is: {floor}\nThis is a {percent_change} {change}",
+              "description": f"The new lowest price for event is: {new_price}\nThis is a {percent_change} {change}",
               "url": f"{url}",
               "color": 11478235
             }
@@ -50,8 +56,27 @@ class WebhookManager():
           "username": "ticombo monitor",
           "attachments": []
         } 
-        r = requests.post(self.webhook_url, data=json.dumps(message))
-        if 200 <= r.status_code < 300:
-            print(f"Webhook sent {result.status_code}")
-        else:
+        print(json.dumps(message))
+        result = requests.post(self.webhook_url, data=json.dumps(message), headers={'Content-type': "application/json"})
+        if not (200 <= result.status_code < 300):
+            print(f"Webhook could not be sent, please check webhook.")
+            print(f"Not sent with {result.status_code}, response:\n{result.json()}")
+
+    def send_new_listing_webhook(self, listing, url):
+        message = {
+          "content": None,
+          "embeds": [
+            {
+              "title": "New Listing Added to Monitor!",
+              "description": f"Nickname: {listing.nickname}\nCategory: {listing.category}\nQuantity: {listing.quantity}\nUrl: {url}",
+              "url": url,
+              "color": None 
+            }
+          ],
+          "username": "ticombo monitor",
+          "attachments": []
+        }
+        result = requests.post(self.webhook_url, data=json.dumps(message), headers={'Content-type': "application/json"})
+        if not (200 <= result.status_code < 300):
+            print(f"Webhook could not be sent, please check webhook.")
             print(f"Not sent with {result.status_code}, response:\n{result.json()}")

@@ -22,10 +22,12 @@ class SettingsManager():
         self.settings[key] = value
         self.save_settings()
 
+    def get_url_map(self):
+        return self.settings['url_map']
+
     def set_url_map(self, key, value):
         self.settings['url_map'][key] = value
         self.save_settings()
-        return
 
     def get_setting(self, key):
         if key in self.settings:
