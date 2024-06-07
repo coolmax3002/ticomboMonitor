@@ -47,7 +47,8 @@ class Monitor:
             self.events.append(
                 Events(
                     listing_id=event["listing_id"],
-                    url=event["url"]
+                    url=event["url"],
+                    total_tickets=event["total_tickets"]
                 )
             )
 
@@ -164,6 +165,7 @@ class Monitor:
                             self.webhook_manager.send_webhook_event("RG womens final", total_tickets, event.total_tickets, event.url)
                             event.total_tickets = total_tickets
                             self.settings_manager.set_events(self.events)
-                    except expression as identifier:
-                        pass
+                        print("stock request complete")
+                    except Exception as e:
+                        print("couldn't grab number of tickets left")
                     time.sleep(self.delay / 1000)
