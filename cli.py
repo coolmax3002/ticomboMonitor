@@ -28,10 +28,9 @@ class MonitorCLI(Cmd):
     def do_add_listing(self, arg):
         if arg:
             args = shlex.split(arg)
-            if len(args) != 4:
-                print("Wrong number of arguments passed: add listing <url> <catergory> <quantity> <nickname>")
+            if len(args) != 1:
+                print("Wrong number of arguments passed: add listing <url>") 
                 return            
-            print("Monitor stopping to apply changes")
             if self.monitor.get_monitor_status():
                 print("Monitor is runnnig, restarting to apply changes...")
                 self.do_stop_monitor()
@@ -39,7 +38,12 @@ class MonitorCLI(Cmd):
             if not listing_id:
                 print("Invalid url, error message above^")
                 return
-            self.monitor.add_listing(listing_id, args[1], arg[2], args[3])
+            category = input("Category to monitor('all' for all categories): ")
+            #TODO category logic
+            quantity = input("Quantity to monitor(1-4): ")
+            while not quantity.isdigit() and 1 <= quantity <= 4:
+                quantity = input("provide a valid quantity between 1 and 4: ")
+            nickname = input("Provide a nickname for this event: ") 
         else:
             print("No link provided")
 
@@ -67,4 +71,5 @@ class MonitorCLI(Cmd):
         print(self.monitor.webhook_manager.get_webhook_url())
             
     def do_show_listings(self, args):
-        print(self.monitor.listings)
+        for listing in self.monitor.listings:
+            print(listing.to_dict())

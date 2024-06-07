@@ -18,7 +18,7 @@ class Monitor:
         self.settings_manager = SettingsManager()
         self.webhook_manager = WebhookManager(webhook_url=self.settings_manager.get_setting('webhook'))
         self.listings = []
-        self.urlMap = dict() 
+        self.url_map = dict() 
         self.running = False
         self.thread = None
         self.delay = delay
@@ -26,7 +26,7 @@ class Monitor:
         listings = self.settings_manager.get_listings()
         print(listings)
         for listing in listings:
-            self.listings.append(Listings(listing_id=listing['listing_id'], catergory=listing['catergory'], quantity=listing['quantity'], nickname=listing['nickname']))
+            self.listings.append(Listings(listing_id=listing['listing_id'], category=listing['category'], quantity=listing['quantity'], nickname=listing['nickname']))
 
     def set_delay(self, delay):
         self.delay = delay
@@ -43,14 +43,14 @@ class Monitor:
     def get_monitor_status(self):
         return self.running
 
-    def add_listing(self, listing_id, catergory, quantity, nickname):
-        #TODO figure out good way to save json
-        self.listings.append(Listings(listing_id=listing_id, catergory=catergory, quantity=quantity, nickname=nickname))
+    def add_listing(self, listing_id, category, quantity, nickname):
+        #TODO pull all the categories and choose the closest one to the one provided 
+        self.listings.append(Listings(listing_id=listing_id, category=category, quantity=quantity, nickname=nickname))
         self.settings_manager.set_listings(self.listings)
 
     def grab_listing_id(self, url):
         #grab listing name from url
-        parsed_url = urlpase(url)
+        parsed_url = urlparse(url)
         url_parts = parsed_url.path.split('/')
         listing_name = url_parts[-1]
 
@@ -61,7 +61,8 @@ class Monitor:
                 data = r.json()
                 try:
                     listing_id = data['payload'][0]['eventId']
-                    self.urlMap[listing_id] = url
+                    self.url_map[listing_id] = url
+                    self.settings_manager.set_url_map(listing_id, url)
                 except Exception as e:
                     print("listing ID coud not be found")
                     return None
@@ -77,7 +78,7 @@ class Monitor:
                 for j, listing in enumerate(self.listings):
                     print("making request")
                     r = requests.get(
-                        f"https://www.ticombo.com/prod/discovery/events/{listing[0]}/listings?limit=20&include=$total&populate=rel.user:firstName,displayName,urlPicture,trustedSeller,metadata,features.priceOptimization,representative%7Creservations:amount,expiresAt,price&sort=bestprice&categories=1:{listing[1]}&quantity={listing[2]}",
+                        f"https://www.ticombo.com/prod/discovery/events/{listing.listing_id}/listings?limit=20&include=$total&populate=rel.user:firstName,displayName,urlPicture,trustedSeller,metadata,features.priceOptimization,representative%7Creservations:amount,expiresAt,price&sort=bestprice&categories=1:{listing.category}&quantity={listing.quantity}",
                         proxies=proxy,
                     )
                     if r.status_code == 200:
@@ -87,10 +88,11 @@ class Monitor:
                             print("trying to grab price")
                             floor = tickets[0]["price"]["selling"]["value"]
                             currency = tickets[0]["price"]["selling"]["currency"]
-                            if floor < listing[4]:
+                            #TODO convert to usd 
+                            if floor < listing.floor:
                                 print(f"New price!! {floor=}")
-                                self.webhook_manager.send_webhook(listing[3], floor, listing[4], self.urlMap[listing[0]])
-                                listing[4] = floor
+                                self.webhook_manager.send_webhook(listing.nickname, floor, listing.floor, self.url_map[listing.listing_id])
+                                listing.floor = floor
                                 self.settings_manager.set_listings(self.listings)
                             else:
                                 print("no change")

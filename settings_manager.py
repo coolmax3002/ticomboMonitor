@@ -22,6 +22,11 @@ class SettingsManager():
         self.settings[key] = value
         self.save_settings()
 
+    def set_url_map(self, key, value):
+        self.settings['url_map'][key] = value
+        self.save_settings()
+        return
+
     def get_setting(self, key):
         if key in self.settings:
             return self.settings[key]
@@ -31,7 +36,7 @@ class SettingsManager():
         return self.settings.get('listings', [])
 
     def set_listings(self, listings):
-        for listings in listings:
+        for listing in listings:
            self.settings['listings'].append(listing.to_dict())
         self.save_settings()
 
