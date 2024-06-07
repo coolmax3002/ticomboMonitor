@@ -1,5 +1,5 @@
 import json
-from listings import Listings
+from listings import Listings, Events
 
 
 class SettingsManager:
@@ -39,8 +39,18 @@ class SettingsManager:
         return self.settings.get("listings", [])
 
     def set_listings(self, listings):
+        self.settings["listings"] = []
         for listing in listings:
             self.settings["listings"].append(listing.to_dict())
+        self.save_settings()
+
+    def get_events(self):
+        return self.settings.get("events", [])
+
+    def set_events(self, events):
+        self.settings["events"] = []
+        for event in events:
+            self.settings["events"].append(event.to_dict())
         self.save_settings()
 
     def valid_settings(self):

@@ -1,4 +1,5 @@
 import requests
+import math
 import json
 import threading
 import time
@@ -6,7 +7,7 @@ from proxy_manager import ProxyManager
 from settings_manager import SettingsManager
 from webhook_manager import WebhookManager
 from urllib.parse import urlparse, parse_qs
-from listings import Listings
+from listings import Listings, Events
 
 
 class Monitor:
@@ -21,13 +22,15 @@ class Monitor:
             webhook_url=self.settings_manager.get_setting("webhook")
         )
         self.listings = []
+        self.events = []
         self.url_map = self.settings_manager.get_url_map()
         self.running = False
         self.thread = None
         self.delay = delay
-        self.euro_exchange_rate = 1.08
+        self.euro_exchange_rate = 1.089
 
         listings = self.settings_manager.get_listings()
+        events = self.settings_manager.get_events()
         print(listings)
         for listing in listings:
             self.listings.append(
@@ -37,6 +40,14 @@ class Monitor:
                     quantity=listing["quantity"],
                     nickname=listing["nickname"],
                     floor=listing["floor"]
+                )
+            )
+
+        for event in events:
+            self.events.append(
+                Events(
+                    listing_id=event["listing_id"],
+                    url=event["url"]
                 )
             )
 
@@ -69,6 +80,14 @@ class Monitor:
         self.webhook_manager.send_new_listing_webhook(
             new_listing, self.url_map[new_listing.listing_id]
         )
+
+    def add_event(self, listing_id, url):
+        new_event = Events(
+            listing_id=listing_id,
+            url=url
+        )
+        self.events.append(new_event)
+        self.settings_manager.set_events(self.events)
 
     def grab_listing_id(self, url):
         # grab listing name from url
@@ -110,7 +129,7 @@ class Monitor:
                         tickets = data.get("payload", [])
                         try:
                             print("trying to grab price")
-                            floor = round(float(tickets[0]["price"]["sellingEur"]) * self.euro_exchange_rate,2)
+                            floor = math.ceil(float(tickets[0]["price"]["sellingEur"]) * self.euro_exchange_rate)
                             if floor != listing.floor: 
                                 print(f"New price!! {floor=}")
                                 self.webhook_manager.send_webhook(
@@ -128,4 +147,23 @@ class Monitor:
                             print("couldn't grab floor price")
                     else:
                         print(r.status_code)
+
+                    #check events now
+                    event = self.events[j % len(self.events)]
+                    events_resp = requests.get(
+                        f"https://www.ticombo.com/prod/discovery/events/{event.listing_id}/listings/stats?platform=tc_de",
+                        proxies=proxy,
+                    )
+                    try:
+                        print("grabbing number of tickets left")
+                        data = events_resp.json()
+                        payload = data.get("payload", {})
+                        total_tickets = payload["availableTickets"]
+                        if total_tickets != event.total_tickets:
+                            #TODO change this hardcode, set nickname in event
+                            self.webhook_manager.send_webhook_event("RG womens final", total_tickets, event.total_tickets, event.url)
+                            event.total_tickets = total_tickets
+                            self.settings_manager.set_events(self.events)
+                    except expression as identifier:
+                        pass
                     time.sleep(self.delay / 1000)

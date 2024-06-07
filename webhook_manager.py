@@ -1,5 +1,6 @@
 import requests
 import json
+from datetime import datetime
 from listings import Listings
 
 
@@ -25,6 +26,7 @@ class WebhookManager:
                     "title": "Webhook Test",
                     "description": "Your webhook is working!",
                     "color": None,
+                    "timestamp": datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z',
                 }
             ],
             "username": "ticombo monitor",
@@ -57,6 +59,7 @@ class WebhookManager:
                     "description": f"New lowest price: ${new_price}\nThis is a {percent_change} {change}",
                     "url": f"{url}",
                     "color": 11478235,
+                    "timestamp": datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z',
                 }
             ],
             "username": "ticombo monitor",
@@ -80,6 +83,7 @@ class WebhookManager:
                     "title": "New Listing Added to Monitor!",
                     "description": f"Nickname: {listing.nickname}\nCategory: {listing.category}\nQuantity: {listing.quantity}\nUrl: {url}",
                     "color": None,
+                    "timestamp": datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z',
                 }
             ],
             "username": "ticombo monitor",
@@ -93,3 +97,31 @@ class WebhookManager:
         if not (200 <= result.status_code < 300):
             print(f"Webhook could not be sent, please check webhook.")
             print(f"Not sent with {result.status_code}, response:\n{result.json()}")
+
+
+    def send_webhook_event(self, nickname, new_price, old_price, url):
+        # TODO pass in the listing itself, and then parse within this function
+        message = {
+            "content": None,
+            "embeds": [
+                {
+                    "title": f"{nickname}: Number of Listings Changed!",
+                    "description": f"Number of ticket for sale for this event has changed.\n{old_price} tickets -> {new_price} tickets",
+                    "url": f"{url}",
+                    "color": 11478235,
+                    "timestamp": datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z',
+                }
+            ],
+            "username": "ticombo monitor",
+            "attachments": [],
+        }
+        print(json.dumps(message))
+        result = requests.post(
+            self.webhook_url,
+            data=json.dumps(message),
+            headers={"Content-type": "application/json"},
+        )
+        if not (200 <= result.status_code < 300):
+            print(f"Webhook could not be sent, please check webhook.")
+            print(f"Not sent with {result.status_code}, response:\n{result.json()}")
+

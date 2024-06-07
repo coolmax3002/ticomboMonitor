@@ -50,6 +50,20 @@ class MonitorCLI(Cmd):
         else:
             print("No link provided")
 
+    def do_add_event(self, arg):
+        args = shlex.split(arg)
+        if len(args) == 1:
+            if self.monitor.get_monitor_status():
+                print("Monitor is runnnig, restarting to apply changes...")
+                self.do_stop_monitor()
+            listing_id = self.monitor.grab_listing_id(url=args[0])
+            if not listing_id:
+                print("Invalid url, error message above^")
+                return
+            self.monitor.add_event(listing_id=listing_id, url=args[0])
+        else:
+            print("Invalid command, use command: add_event <url>")
+
     def do_set_webhook(self, arg):
         if not arg:
             print(
@@ -80,3 +94,7 @@ class MonitorCLI(Cmd):
     def do_show_listings(self, args):
         for listing in self.monitor.listings:
             print(listing.to_dict())
+
+    def do_show_events(self, args):
+        for event in self.monitor.events:
+            print(event.to_dict())
