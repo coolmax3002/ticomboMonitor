@@ -1,7 +1,8 @@
-class ProxyManager():
+class ProxyManager:
     """
     Manages the proxies used to monitor
     """
+
     def __init__(self, proxy_path=None):
         self.proxies = []
         if proxy_path:
@@ -19,4 +20,3 @@ class ProxyManager():
 
     def get_proxies(self):
         return self.proxies
-            

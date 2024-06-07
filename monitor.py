@@ -8,6 +8,7 @@ from webhook_manager import WebhookManager
 from urllib.parse import urlparse, parse_qs
 from listings import Listings
 
+
 class Monitor:
     """
     A monitor class to create a lowest price monitor for ticombo listings
@@ -16,17 +17,28 @@ class Monitor:
     def __init__(self, proxy_path=None, listings=[], delay=60000):
         self.proxy_manager = ProxyManager(proxy_path)
         self.settings_manager = SettingsManager()
-        self.webhook_manager = WebhookManager(webhook_url=self.settings_manager.get_setting('webhook'))
+        self.webhook_manager = WebhookManager(
+            webhook_url=self.settings_manager.get_setting("webhook")
+        )
         self.listings = []
-        self.url_map = self.settings_manager.get_url_map() 
+        self.url_map = self.settings_manager.get_url_map()
         self.running = False
         self.thread = None
         self.delay = delay
+        self.euro_exchange_rate = 1.08
 
         listings = self.settings_manager.get_listings()
         print(listings)
         for listing in listings:
-            self.listings.append(Listings(listing_id=listing['listing_id'], category=listing['category'], quantity=listing['quantity'], nickname=listing['nickname']))
+            self.listings.append(
+                Listings(
+                    listing_id=listing["listing_id"],
+                    category=listing["category"],
+                    quantity=listing["quantity"],
+                    nickname=listing["nickname"],
+                    floor=listing["floor"]
+                )
+            )
 
     def set_delay(self, delay):
         self.delay = delay
@@ -44,35 +56,44 @@ class Monitor:
         return self.running
 
     def add_listing(self, listing_id, category, quantity, nickname):
-        #TODO pull all the categories and choose the closest one to the one provided 
-        new_listing = Listings(listing_id=listing_id, category=category, quantity=quantity, nickname=nickname)
+        # TODO pull all the categories and choose the closest one to the one provided
+        new_listing = Listings(
+            listing_id=listing_id,
+            category=category,
+            quantity=quantity,
+            nickname=nickname,
+        )
         self.listings.append(new_listing)
         self.settings_manager.set_listings(self.listings)
-        #TODO add url to the listing class instead of passing url too
-        self.webhook_manager.send_new_listing_webhook(new_listing, self.url_map[new_listing.listing_id])
+        # TODO add url to the listing class instead of passing url too
+        self.webhook_manager.send_new_listing_webhook(
+            new_listing, self.url_map[new_listing.listing_id]
+        )
 
     def grab_listing_id(self, url):
-        #grab listing name from url
+        # grab listing name from url
         parsed_url = urlparse(url)
-        url_parts = parsed_url.path.split('/')
+        url_parts = parsed_url.path.split("/")
         listing_name = url_parts[-1]
 
-        api_url = f"https://www.ticombo.com/prod/discovery/events?id={listing_name}&limit=1"
+        api_url = (
+            f"https://www.ticombo.com/prod/discovery/events?id={listing_name}&limit=1"
+        )
 
         r = requests.get(api_url)
         if r.status_code == 200:
-                data = r.json()
-                try:
-                    listing_id = data['payload'][0]['eventId']
-                    self.url_map[listing_id] = url
-                    self.settings_manager.set_url_map(listing_id, url)
-                except Exception as e:
-                    print("listing ID coud not be found")
-                    return None
-                return listing_id
-        else:
-                print(f"events api request failed {r.status_code=}")
+            data = r.json()
+            try:
+                listing_id = data["payload"][0]["eventId"]
+                self.url_map[listing_id] = url
+                self.settings_manager.set_url_map(listing_id, url)
+            except Exception as e:
+                print("listing ID coud not be found")
                 return None
+            return listing_id
+        else:
+            print(f"events api request failed {r.status_code=}")
+            return None
 
     def monitor(self):
         # TODO check if proxies exist
@@ -89,13 +110,16 @@ class Monitor:
                         tickets = data.get("payload", [])
                         try:
                             print("trying to grab price")
-                            floor = tickets[0]["price"]["selling"]["value"]
-                            currency = tickets[0]["price"]["selling"]["currency"]
-                            #TODO convert to usd 
-                            if floor < listing.floor:
+                            floor = round(float(tickets[0]["price"]["sellingEur"]) * self.euro_exchange_rate,2)
+                            if floor != listing.floor: 
                                 print(f"New price!! {floor=}")
-                                self.webhook_manager.send_webhook(listing.nickname, floor, listing.floor, self.url_map[listing.listing_id])
-                                print('webhook sent')
+                                self.webhook_manager.send_webhook(
+                                    listing.nickname,
+                                    floor,
+                                    listing.floor,
+                                    self.url_map[listing.listing_id],
+                                )
+                                print("webhook sent")
                                 listing.floor = floor
                                 self.settings_manager.set_listings(self.listings)
                             else:
