@@ -3,6 +3,7 @@ import math
 import json
 import threading
 import time
+from time import sleep
 from proxy_manager import ProxyManager
 from settings_manager import SettingsManager
 from webhook_manager import WebhookManager
@@ -62,7 +63,9 @@ class Monitor:
 
     def stop_monitor(self):
         self.running = False
+        sleep(5)
         self.thread.join()
+        print("Monitor Stopped!")
 
     def get_monitor_status(self):
         return self.running
@@ -117,9 +120,12 @@ class Monitor:
 
     def monitor(self):
         # TODO check if proxies exist
-        while self.running:
+        while True:
             for i, proxy in enumerate(self.proxy_manager.get_proxies()):
                 for j, listing in enumerate(self.listings):
+                    if not self.running:
+                        print("monitor has been requested to stop")
+                        return
                     print("making request")
                     r = requests.get(
                         f"https://www.ticombo.com/prod/discovery/events/{listing.listing_id}/listings?limit=20&include=$total&populate=rel.user:firstName,displayName,urlPicture,trustedSeller,metadata,features.priceOptimization,representative%7Creservations:amount,expiresAt,price&sort=bestprice&categories=1:{listing.category}&quantity={listing.quantity}",
@@ -168,4 +174,5 @@ class Monitor:
                         print("stock request complete")
                     except Exception as e:
                         print("couldn't grab number of tickets left")
-                    time.sleep(self.delay / 1000)
+                    if self.running: 
+                        time.sleep(self.delay / 1000)
