@@ -27,6 +27,8 @@ class Monitor:
         self.url_map = self.settings_manager.get_url_map()
         self.running = False
         self.thread = None
+        self.vivid = None 
+        self.stubhub = None
         self.delay = delay
         self.euro_exchange_rate = 1.089
 
@@ -60,6 +62,12 @@ class Monitor:
         self.running = True
         self.thread = threading.Thread(target=self.monitor, args=())
         self.thread.start()
+
+    def start_vivid_monitor(self):
+        self.running = True
+        self.thread = threading.Thread(target=self.vivid_monitor, args=())
+        self.thread.start()
+
 
     def stop_monitor(self):
         self.running = False
@@ -176,3 +184,43 @@ class Monitor:
                         print("couldn't grab number of tickets left")
                     if self.running: 
                         time.sleep(self.delay / 1000)
+
+    def vivid_monitor(self):
+        current_listing_count = 1 
+        current_lowest_price = 1
+        url = "https://www.vividseats.com/kendrick-lamar-tickets-inglewood-kia-forum-6-19-2024--concerts-rap-hip-hop/production/5013509?productionId=5013509"
+        production_id = 5013509
+        print("vivid monitor started")
+        headers = {
+            'Accept': 'application/json',
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36'
+        }
+        while True:
+            for i, proxy in enumerate(self.proxy_manager.get_proxies()):
+                if not self.running:
+                    print("monitor has been requested to stop")
+                    return
+                print("making request")
+                r = requests.get(f"https://www.vividseats.com/hermes/api/v1/listings?productionId={production_id}&currency=USD", headers=headers, proxies=proxy)
+                if r.status_code != 200:
+                    print(f"request failed {r.status_code=}")
+                else:
+                    data = r.json()
+                    listing_count = data.get("global")
+                    print(listing_count)
+                    listing_count = int(listing_count[0]["listingCount"])
+                    lowest_price = data.get("tickets")
+                    lowest_price = float(lowest_price[0]["p"])
+                    if listing_count != current_listing_count:
+                        self.webhook_manager.send_webhook_event("Kendrick Lamar", listing_count, current_listing_count, url)
+                        current_listing_count = listing_count
+
+                    if lowest_price != current_lowest_price:
+                        self.webhook_manager.send_webhook("Kendrick Lamar", lowest_price, current_lowest_price, url)
+                        current_lowest_price = lowest_price
+                if self.running:
+                    time.sleep(self.delay / 1000)
+
+
+
+

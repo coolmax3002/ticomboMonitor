@@ -20,6 +20,12 @@ class MonitorCLI(Cmd):
             else:
                 print("webhook is not set")
 
+    def do_start_vivid_monitor(self, arg):
+        if self.monitor.get_monitor_status():
+            print("Monitor already running")
+            return
+        self.monitor.start_vivid_monitor()
+
     def do_stop_monitor(self, arg):
         if self.monitor.get_monitor_status():
             print("Stopping Monitor...")

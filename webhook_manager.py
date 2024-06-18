@@ -56,7 +56,7 @@ class WebhookManager:
             "embeds": [
                 {
                     "title": f"{nickname}",
-                    "description": f"New lowest price: ${new_price}\nThis is a {percent_change} {change}",
+                    "description": f"New lowest price: ${old_price} -> ${new_price}\nThis is a {percent_change} {change}",
                     "url": f"{url}",
                     "color": 11478235,
                     "timestamp": datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z',
