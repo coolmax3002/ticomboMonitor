@@ -220,6 +220,9 @@ class Monitor:
                         current_lowest_price = lowest_price
                 if self.running:
                     time.sleep(self.delay / 1000)
+    
+    def stubhub_monitor(self):
+        
 
 
 
